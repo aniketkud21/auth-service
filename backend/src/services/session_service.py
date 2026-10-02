@@ -15,9 +15,16 @@ class SessionService:
         await db.commit()
         await db.refresh(session)
         return session_id
+
+    async def fetch_session(self, session_id: str, db: AsyncSession):
+        session = await db.get(Session, session_id)
+        if not session:
+            return None
+
+        return session
     
     async def validate_session(self, session_id: str, db: AsyncSession):
-        session = await db.get(Session, session_id)
+        session = await self.fetch_session(session_id, db)
 
         if not session:
             return {"is_active": False, "user_id": None}
@@ -29,7 +36,7 @@ class SessionService:
         return {"is_active": True, "user_id": session.user_id}
 
     async def delete_session(self, session_id: str, db: AsyncSession):
-        session = await db.get(Session, session_id)
+        session = await self.fetch_session(session_id, db)
         if not session:
             return
         await db.delete(session)

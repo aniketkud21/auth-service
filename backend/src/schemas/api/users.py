@@ -1,15 +1,6 @@
 from pydantic import BaseModel
 from datetime import datetime
 
-class UserCreate(BaseModel):
-    username: str
-    email: str
-    password: str
-
-class UserLogin(BaseModel):
-    username: str
-    password: str
-
 class UserResponse(BaseModel):
     id: int
     username: str
@@ -18,3 +9,9 @@ class UserResponse(BaseModel):
     is_admin: bool
     created_at: datetime
     updated_at: datetime
+
+class UserUpdateRequest(BaseModel):
+    username: str | None = None
+    email: str | None = None
+    is_active: bool | None = None
+    is_admin: bool | None = None

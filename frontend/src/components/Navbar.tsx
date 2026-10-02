@@ -1,47 +1,51 @@
-import { Shield, UserPlus, Users } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+import { useEffect, useState } from 'react'
+import { Link, useLocation } from 'react-router-dom'
+import { UserMenu } from '@/components/UserMenu'
+import { authApi, type UserResponse } from '@/services/auth'
 
-interface NavbarProps {
-  currentPage: 'users' | 'auth'
-  onNavigate: (page: 'users' | 'auth') => void
-}
+export function Navbar() {
+  const location = useLocation()
+  const [currentUser, setCurrentUser] = useState<UserResponse | null>(null)
 
-export function Navbar({ currentPage, onNavigate }: NavbarProps) {
+  const checkUser = async () => {
+    const user = await authApi.getMe()
+    setCurrentUser(user)
+  }
+
+  useEffect(() => {
+    checkUser()
+  }, [location.pathname])
+
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container max-w-5xl mx-auto flex h-16 items-center justify-between px-4 sm:px-8">
-        {/* Brand */}
-        <button
-          onClick={() => onNavigate('users')}
-          className="flex items-center space-x-2.5 group cursor-pointer"
-        >
-          <div className="h-9 w-9 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center text-primary group-hover:scale-105 transition-transform">
-            <Shield className="h-5 w-5" />
+      <div className="container max-w-7xl mx-auto flex h-16 items-center justify-between px-4 sm:px-6 lg:px-8">
+        {/* Brand & Scope */}
+        <div className="flex items-center gap-3">
+          <Link
+            to="/"
+            className="group cursor-pointer select-none py-1"
+          >
+            <span className="font-bold text-xl tracking-tight transition-opacity group-hover:opacity-85">
+              kinto<span className="text-emerald-500">.</span>
+            </span>
+          </Link>
+          <span className="text-border text-sm select-none font-light">/</span>
+          <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-secondary/80 border border-border/60 text-[11px] font-medium text-muted-foreground select-none">
+            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+            <span>production</span>
           </div>
-          <span className="font-semibold text-lg tracking-tight">AuthGuard</span>
-        </button>
+        </div>
 
         {/* Navigation */}
-        <nav className="flex items-center space-x-2">
-          <Button
-            variant={currentPage === 'users' ? 'secondary' : 'ghost'}
-            size="sm"
-            onClick={() => onNavigate('users')}
-            className="gap-1.5"
-          >
-            <Users className="h-4 w-4" />
-            Users
-          </Button>
-
-          <Button
-            variant={currentPage === 'auth' ? 'default' : 'outline'}
-            size="sm"
-            onClick={() => onNavigate('auth')}
-            className="gap-1.5"
-          >
-            <UserPlus className="h-4 w-4" />
-            Sign In / Register
-          </Button>
+        <nav className="flex items-center space-x-3">
+          {/* User Account / Profile Menu */}
+          <UserMenu
+            user={currentUser}
+            onLogoutSuccess={() => {
+              setCurrentUser(null)
+              window.location.href = '/login'
+            }}
+          />
         </nav>
       </div>
     </header>

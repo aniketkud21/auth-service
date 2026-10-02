@@ -1,15 +1,19 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
-from ..schemas import UserCreate, UserLogin, UserResponse
+from ..schemas.api.auth import UserCreateRequest
+from ..schemas.api.users import UserResponse, UserUpdateRequest
+
 from ..db.models import User
-from ..utils.passwords import hash_password, verify_password
+
+from ..utils.passwords import hash_password
+
 from .session_service import SessionService
 
 session_service = SessionService()
 
 class UserService:
-    async def create_user(self, user: UserCreate, db: AsyncSession) -> UserResponse:
+    async def create_user(self, user: UserCreateRequest, db: AsyncSession) -> UserResponse:
         new_user = User(
             username=user.username,
             email=user.email,
@@ -20,7 +24,13 @@ class UserService:
         await db.refresh(new_user)
         return new_user
         
-    async def get_user(self, user_id: int, username: str, email: str, db: AsyncSession):
+    async def get_user(
+        self,
+        user_id: int | None = None,
+        username: str | None = None,
+        email: str | None = None,
+        db: AsyncSession = None,
+    ):
         if user_id:
             query = select(User).where(User.id == user_id)
         elif username:
@@ -30,17 +40,31 @@ class UserService:
         else:
             raise ValueError("Please provide at least one of user_id, username, or email")
         result = await db.execute(query)
-        return result.scalar_one()
+        return result.scalar_one_or_none()
 
     async def get_users(self, db: AsyncSession):
         query = select(User)
         result = await db.execute(query)
         return result.scalars().all()
 
-    async def login(self, user: UserLogin, db: AsyncSession):
-        db_user = await self.get_user(username=user.username, user_id=None, email=None, db=db)
+    async def update_user(self, user_id: int, user: UserUpdateRequest, db: AsyncSession):
+        db_user = await self.get_user(user_id=user_id, db=db)
 
-        if not verify_password(user.password, db_user.hashed_password):
-            raise ValueError("Invalid credentials")
-        session_id = await session_service.create_session(db_user.id, db=db)
-        return session_id
+        if not db_user:
+            return None
+
+        # Extract update data, excluding fields that shouldn't be updated
+        # exclude_unset=True ensures you don't overwrite existing data with None
+        update_data = user.model_dump(exclude_unset=True)
+
+        # Apply the changes to the Python object
+        for key, value in update_data.items():
+            setattr(db_user, key, value)
+
+        await db.commit()
+        await db.refresh(db_user)
+        return db_user
+    
+        
+        
+

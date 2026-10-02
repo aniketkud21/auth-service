@@ -22,4 +22,7 @@ async def get_user(request: Request, db: AsyncSession = Depends(get_db)):
     if not user:
         raise HTTPException(status_code=401, detail="Unauthorized")
 
+    # Attach session_id
+    user.session_id = session_id
+
     return user

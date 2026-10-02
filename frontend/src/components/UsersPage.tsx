@@ -1,14 +1,14 @@
+import { Link, useNavigate } from 'react-router-dom'
 import { useEffect, useState } from 'react'
-import { Users as UsersIcon, RefreshCw, Shield, UserCheck, AlertCircle, Calendar } from 'lucide-react'
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card'
+import { Users as UsersIcon, Shield, UserCheck, AlertCircle } from 'lucide-react'
+import { Card, CardTitle, CardDescription, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { authApi, type UserResponse } from '@/services/auth'
 
-interface UsersPageProps {
-  onAddUserClick: () => void
-}
+import { PageHeader } from './PageHeader'
 
-export function UsersPage({ onAddUserClick }: UsersPageProps) {
+export function UsersPage() {
+  const navigate = useNavigate()
   const [users, setUsers] = useState<UserResponse[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -20,6 +20,10 @@ export function UsersPage({ onAddUserClick }: UsersPageProps) {
       const data = await authApi.getUsers()
       setUsers(data)
     } catch (err: any) {
+      if (err.status === 401) {
+        navigate('/login', { replace: true })
+        return
+      }
       setError(err.message || 'Failed to load users')
     } finally {
       setLoading(false)
@@ -31,36 +35,16 @@ export function UsersPage({ onAddUserClick }: UsersPageProps) {
   }, [])
 
   return (
-    <div className="space-y-8 max-w-5xl mx-auto py-2">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border/40 pb-6">
-        <div>
-          <div className="inline-flex items-center gap-2 rounded-full border border-border bg-secondary/50 px-3 py-1 text-xs text-muted-foreground mb-2">
-            <UsersIcon className="h-3.5 w-3.5" />
-            User Directory
-          </div>
-          <h1 className="text-3xl font-extrabold tracking-tight">Registered Users</h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            Browse and inspect all accounts stored in the PostgreSQL database.
-          </p>
-        </div>
-
-        <div className="flex items-center gap-3">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={fetchUsers}
-            disabled={loading}
-            className="gap-2"
-          >
-            <RefreshCw className={`h-3.5 w-3.5 ${loading ? 'animate-spin' : ''}`} />
-            Refresh
+    <div className="space-y-6">
+      <PageHeader
+        title="Users"
+        description="Browse and manage all registered user accounts."
+        actions={
+          <Button asChild size="sm">
+            <Link to="/users/new">+ Add User</Link>
           </Button>
-          <Button size="sm" onClick={onAddUserClick}>
-            + Register New
-          </Button>
-        </div>
-      </div>
+        }
+      />
 
       {/* Error Banner */}
       {error && (
@@ -77,18 +61,12 @@ export function UsersPage({ onAddUserClick }: UsersPageProps) {
 
       {/* Loading Skeleton */}
       {loading && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {[1, 2, 3].map((i) => (
-            <Card key={i} className="animate-pulse">
-              <CardHeader className="space-y-2">
-                <div className="h-5 w-24 bg-muted rounded" />
-                <div className="h-4 w-36 bg-muted/60 rounded" />
-              </CardHeader>
-              <CardContent>
-                <div className="h-3 w-28 bg-muted/40 rounded" />
-              </CardContent>
-            </Card>
-          ))}
+        <div className="rounded-xl border border-border/80 bg-card overflow-hidden shadow-sm">
+          <div className="p-4 space-y-3">
+            {[1, 2, 3, 4, 5].map((i) => (
+              <div key={i} className="h-10 w-full bg-secondary/60 rounded-md animate-pulse" />
+            ))}
+          </div>
         </div>
       )}
 
@@ -105,67 +83,104 @@ export function UsersPage({ onAddUserClick }: UsersPageProps) {
                 Create your first user to populate the database directory.
               </CardDescription>
             </div>
-            <Button size="sm" onClick={onAddUserClick}>
-              Create User
+            <Button asChild size="sm">
+              <Link to="/users/new">+ Add User</Link>
             </Button>
           </CardContent>
         </Card>
       )}
 
-      {/* Users Grid */}
+      {/* Users DataTable */}
       {!loading && !error && users.length > 0 && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {users.map((user) => (
-            <Card key={user.id} className="hover:border-primary/40 transition-colors">
-              <CardHeader className="space-y-2 pb-3">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <div className="h-8 w-8 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center text-primary font-semibold text-xs">
-                      {user.username.slice(0, 2).toUpperCase()}
-                    </div>
-                    <div>
-                      <CardTitle className="text-base font-semibold leading-tight">
-                        {user.username}
-                      </CardTitle>
-                      <CardDescription className="text-xs">
-                        ID: #{user.id}
-                      </CardDescription>
-                    </div>
-                  </div>
+        <div className="rounded-xl border border-border/80 bg-card overflow-hidden shadow-sm">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-sm">
+              <thead className="bg-secondary/40 border-b border-border/60 text-xs text-muted-foreground uppercase font-mono tracking-wider">
+                <tr>
+                  <th scope="col" className="py-3.5 px-4 font-semibold">User</th>
+                  <th scope="col" className="py-3.5 px-4 font-semibold">Email</th>
+                  <th scope="col" className="py-3.5 px-4 font-semibold">Role</th>
+                  <th scope="col" className="py-3.5 px-4 font-semibold">Status</th>
+                  <th scope="col" className="py-3.5 px-4 font-semibold">Joined</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border/40 text-foreground">
+                {users.map((user) => (
+                  <tr
+                    key={user.id}
+                    onClick={() => navigate(`/users/${user.id}`)}
+                    className="hover:bg-secondary/30 transition-colors cursor-pointer group"
+                  >
+                    {/* User identifier */}
+                    <td className="py-3.5 px-4">
+                      <div className="flex items-center gap-3">
+                        <div className="h-8 w-8 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 flex items-center justify-center font-bold text-xs shrink-0 group-hover:scale-105 transition-transform">
+                          {user.username.slice(0, 2).toUpperCase()}
+                        </div>
+                        <div>
+                          <span className="font-semibold text-foreground group-hover:text-emerald-500 transition-colors">
+                            {user.username}
+                          </span>
+                          <span className="block text-[11px] text-muted-foreground font-mono">
+                            ID #{user.id}
+                          </span>
+                        </div>
+                      </div>
+                    </td>
 
-                  <div className="flex gap-1.5">
-                    {user.is_admin ? (
-                      <span className="inline-flex items-center gap-1 rounded bg-amber-500/10 text-amber-500 border border-amber-500/20 px-2 py-0.5 text-[10px] font-semibold">
-                        <Shield className="h-3 w-3" />
-                        Admin
-                      </span>
-                    ) : (
-                      <span className="inline-flex items-center gap-1 rounded bg-secondary text-muted-foreground px-2 py-0.5 text-[10px] font-medium">
-                        <UserCheck className="h-3 w-3" />
-                        User
-                      </span>
-                    )}
-                  </div>
-                </div>
-              </CardHeader>
+                    {/* Email */}
+                    <td className="py-3.5 px-4 text-muted-foreground">
+                      {user.email}
+                    </td>
 
-              <CardContent className="space-y-2.5 text-xs text-muted-foreground">
-                <div className="truncate">
-                  <span className="text-foreground/70 font-medium">Email: </span>
-                  <span className="text-foreground/90">{user.email}</span>
-                </div>
+                    {/* Role */}
+                    <td className="py-3.5 px-4">
+                      {user.is_admin ? (
+                        <span className="inline-flex items-center gap-1 rounded bg-amber-500/10 text-amber-500 border border-amber-500/20 px-2 py-0.5 text-[10px] font-semibold">
+                          <Shield className="h-3 w-3" />
+                          Admin
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 rounded bg-secondary text-muted-foreground px-2 py-0.5 text-[10px] font-medium">
+                          <UserCheck className="h-3 w-3" />
+                          User
+                        </span>
+                      )}
+                    </td>
 
-                {user.created_at && (
-                  <div className="flex items-center gap-1.5 text-muted-foreground/80 pt-1 border-t border-border/40 text-[11px]">
-                    <Calendar className="h-3 w-3" />
-                    <span>
-                      Joined {new Date(user.created_at).toLocaleDateString()}
-                    </span>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          ))}
+                    {/* Status */}
+                    <td className="py-3.5 px-4">
+                      {user.is_active !== false ? (
+                        <span className="inline-flex items-center gap-1.5 text-xs text-emerald-500 font-medium">
+                          <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                          Active
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground font-medium">
+                          <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground" />
+                          Inactive
+                        </span>
+                      )}
+                    </td>
+
+                    {/* Joined Date */}
+                    <td className="py-3.5 px-4 text-xs text-muted-foreground">
+                      {user.created_at
+                        ? new Date(user.created_at).toLocaleDateString(undefined, {
+                            month: 'short',
+                            day: 'numeric',
+                            year: 'numeric',
+                          })
+                        : '—'}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <div className="px-4 py-3 bg-secondary/20 border-t border-border/40 text-xs text-muted-foreground">
+            <span>Showing {users.length} registered user{users.length === 1 ? '' : 's'}</span>
+          </div>
         </div>
       )}
     </div>

@@ -1,6 +1,6 @@
-# Auth Service
+# Kinto
 
-A lightweight, asynchronous full-stack authentication and session management service built with **FastAPI**, **PostgreSQL**, and **React + Vite**.
+A lightweight, asynchronous full-stack authentication and session management engine built with **FastAPI**, **PostgreSQL**, and **React + Vite**.
 
 ---
 
