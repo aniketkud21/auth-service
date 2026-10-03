@@ -1,25 +1,22 @@
 import React, { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
-import { Loader2, Eye, EyeOff, Check, AlertCircle, ArrowRight, CornerDownLeft } from 'lucide-react'
+import { Loader2, Eye, EyeOff, AlertCircle, ArrowRight, Check } from 'lucide-react'
 import { authApi } from '@/services/auth'
 
-export function AuthCard() {
+export function SignupPage() {
   const navigate = useNavigate()
-  const [isLogin, setIsLogin] = useState(true)
   const [loading, setLoading] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
-  const [successMessage, setSuccessMessage] = useState<string | null>(null)
-
   const [username, setUsername] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [capsLockActive, setCapsLockActive] = useState(false)
 
-  // Password criteria for signup
+  // Password criteria checklist
   const criteria = {
     length: password.length >= 8,
     hasLetter: /[a-zA-Z]/.test(password),
@@ -43,31 +40,18 @@ export function AuthCard() {
     setCapsLockActive(e.getModifierState('CapsLock'))
   }
 
-  const switchMode = (loginMode: boolean) => {
-    setIsLogin(loginMode)
-    setErrorMessage(null)
-    setSuccessMessage(null)
-  }
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setErrorMessage(null)
-    setSuccessMessage(null)
     setLoading(true)
 
     try {
-      if (isLogin) {
-        await authApi.login({ username, password })
-        setSuccessMessage('Successfully signed in')
-        navigate('/', { replace: true })
-      } else {
-        await authApi.register({ username, email, password })
-        await authApi.login({ username, password })
-        setSuccessMessage('Account created!')
-        navigate('/', { replace: true })
-      }
+      await authApi.register({ username, email, password })
+      // Auto-login upon successful registration
+      await authApi.login({ username, password })
+      navigate('/', { replace: true })
     } catch (err: any) {
-      setErrorMessage(err.message || 'Something went wrong')
+      setErrorMessage(err.message || 'Registration failed')
     } finally {
       setLoading(false)
     }
@@ -77,58 +61,28 @@ export function AuthCard() {
     <div className="w-full">
       {/* Brand Header */}
       <div className="flex flex-col items-center text-center mb-6 select-none">
-        <div className="h-10 w-10 rounded-xl bg-foreground/5 dark:bg-foreground/10 border border-border/80 flex items-center justify-center mb-3 shadow-sm">
+        <Link
+          to="/"
+          className="h-10 w-10 rounded-xl bg-foreground/5 dark:bg-foreground/10 border border-border/80 flex items-center justify-center mb-3 shadow-sm hover:scale-105 transition-transform"
+        >
           <span className="font-bold text-lg tracking-tighter">
             k<span className="text-emerald-500">.</span>
           </span>
-        </div>
+        </Link>
         <h1 className="text-xl font-semibold tracking-tight text-foreground">
-          {isLogin ? 'Welcome back' : 'Create your account'}
+          Create an account
         </h1>
         <p className="text-xs text-muted-foreground mt-1">
-          {isLogin ? 'Sign in to access your sessions and settings' : 'Start managing secure auth sessions in minutes'}
+          Start managing secure authentication and sessions
         </p>
       </div>
 
-      {/* Main Form Container */}
+      {/* Main Card */}
       <div className="rounded-2xl border border-border/70 bg-card/60 backdrop-blur-xl p-6 sm:p-7 shadow-xl shadow-black/[0.03] dark:shadow-none transition-all">
-        {/* Seamless Segmented Tab Switcher */}
-        <div className="grid grid-cols-2 p-1 mb-5 bg-muted/60 rounded-lg border border-border/40 select-none">
-          <button
-            type="button"
-            onClick={() => switchMode(true)}
-            className={`py-1.5 text-xs font-medium rounded-md transition-all ${
-              isLogin
-                ? 'bg-background text-foreground shadow-sm'
-                : 'text-muted-foreground hover:text-foreground'
-            }`}
-          >
-            Sign in
-          </button>
-          <button
-            type="button"
-            onClick={() => switchMode(false)}
-            className={`py-1.5 text-xs font-medium rounded-md transition-all ${
-              !isLogin
-                ? 'bg-background text-foreground shadow-sm'
-                : 'text-muted-foreground hover:text-foreground'
-            }`}
-          >
-            Register
-          </button>
-        </div>
-
-        {/* Error / Success Feedback */}
         {errorMessage && (
           <div className="mb-4 p-3 text-xs rounded-lg border border-destructive/30 bg-destructive/10 text-destructive flex items-center gap-2 animate-in fade-in">
             <AlertCircle className="w-4 h-4 shrink-0" />
             <span className="flex-1">{errorMessage}</span>
-          </div>
-        )}
-        {successMessage && (
-          <div className="mb-4 p-3 text-xs rounded-lg border border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center gap-2 animate-in fade-in">
-            <Check className="w-4 h-4 shrink-0" />
-            <span className="flex-1">{successMessage}</span>
           </div>
         )}
 
@@ -149,46 +103,32 @@ export function AuthCard() {
             />
           </div>
 
-          {!isLogin && (
-            <div className="space-y-1.5 animate-in fade-in slide-in-from-top-1 duration-150">
-              <Label htmlFor="email" className="text-xs font-medium text-foreground/80">
-                Email address
-              </Label>
-              <Input
-                id="email"
-                type="email"
-                autoComplete="email"
-                placeholder="aniket@example.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="h-10 bg-background/80 rounded-lg border-border/80 transition-all focus-visible:ring-emerald-500/20 focus-visible:border-emerald-500"
-                required
-              />
-            </div>
-          )}
+          <div className="space-y-1.5">
+            <Label htmlFor="email" className="text-xs font-medium text-foreground/80">
+              Email address
+            </Label>
+            <Input
+              id="email"
+              type="email"
+              autoComplete="email"
+              placeholder="aniket@example.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="h-10 bg-background/80 rounded-lg border-border/80 transition-all focus-visible:ring-emerald-500/20 focus-visible:border-emerald-500"
+              required
+            />
+          </div>
 
           <div className="space-y-1.5">
-            <div className="flex items-center justify-between">
-              <Label htmlFor="password" className="text-xs font-medium text-foreground/80">
-                Password
-              </Label>
-              {isLogin && (
-                <button
-                  type="button"
-                  tabIndex={-1}
-                  className="text-[11px] text-muted-foreground hover:text-emerald-500 transition-colors"
-                >
-                  Forgot password?
-                </button>
-              )}
-            </div>
-
+            <Label htmlFor="password" className="text-xs font-medium text-foreground/80">
+              Password
+            </Label>
             <div className="relative">
               <Input
                 id="password"
                 type={showPassword ? 'text' : 'password'}
-                autoComplete={isLogin ? 'current-password' : 'new-password'}
-                placeholder="Enter password"
+                autoComplete="new-password"
+                placeholder="Choose a strong password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 onKeyDown={handleKeyDown}
@@ -211,7 +151,6 @@ export function AuthCard() {
               </button>
             </div>
 
-            {/* Caps lock alert */}
             {capsLockActive && (
               <p className="text-[11px] text-amber-500 dark:text-amber-400 font-medium flex items-center gap-1.5 pt-0.5">
                 <span className="inline-block w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
@@ -220,7 +159,7 @@ export function AuthCard() {
             )}
 
             {/* Registration Password Strength & Criteria */}
-            {!isLogin && password.length > 0 && (
+            {password.length > 0 && (
               <div className="space-y-2 pt-1 animate-in fade-in duration-200">
                 <div className="flex justify-between items-center text-[11px]">
                   <span className="text-muted-foreground">Password strength</span>
@@ -262,32 +201,29 @@ export function AuthCard() {
           <Button
             type="submit"
             disabled={loading}
-            className="w-full h-10 mt-3 font-medium bg-foreground text-background hover:bg-foreground/90 transition-all active:scale-[0.99] flex items-center justify-center gap-2 group"
+            className="w-full h-10 mt-3 font-medium bg-foreground text-background hover:bg-foreground/90 transition-all active:scale-[0.99] flex items-center justify-center gap-2 group cursor-pointer"
           >
             {loading ? (
               <Loader2 className="h-4 w-4 animate-spin" />
             ) : (
               <>
-                <span>{isLogin ? 'Sign In' : 'Create Account'}</span>
+                <span>Create Account</span>
                 <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-0.5" />
               </>
             )}
           </Button>
-
-          {/* Keyboard Hint */}
-          <div className="flex items-center justify-center gap-1 pt-1 text-[11px] text-muted-foreground select-none">
-            <span>Press</span>
-            <kbd className="inline-flex items-center px-1.5 py-0.5 text-[10px] font-mono font-medium rounded border border-border/80 bg-muted/60 text-foreground">
-              Enter <CornerDownLeft className="w-2.5 h-2.5 ml-0.5" />
-            </kbd>
-            <span>to submit</span>
-          </div>
         </form>
-      </div>
 
-      {/* Security note below card */}
-      <div className="mt-6 text-center text-xs text-muted-foreground">
-        <span>Protected by HTTP-only secure cookie sessions</span>
+        {/* Clean link to Login page */}
+        <div className="mt-5 pt-4 border-t border-border/50 text-center text-xs text-muted-foreground">
+          Already have an account?{' '}
+          <Link
+            to="/login"
+            className="font-medium text-foreground underline underline-offset-4 hover:text-emerald-500 transition-colors"
+          >
+            Sign in
+          </Link>
+        </div>
       </div>
     </div>
   )

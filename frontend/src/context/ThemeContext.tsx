@@ -1,11 +1,11 @@
 import React, { createContext, useContext, useEffect, useState } from 'react'
 
-type Theme = 'light' | 'dark'
+export type Theme = 'system' | 'light' | 'dark'
 
 interface ThemeContextType {
   theme: Theme
+  resolvedTheme: 'light' | 'dark'
   setTheme: (theme: Theme) => void
-  toggleTheme: () => void
 }
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined)
@@ -13,25 +13,39 @@ const ThemeContext = createContext<ThemeContextType | undefined>(undefined)
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [theme, setThemeState] = useState<Theme>(() => {
     const saved = localStorage.getItem('kinto_theme') as Theme | null
-    if (saved === 'light' || saved === 'dark') return saved
+    if (saved === 'system' || saved === 'light' || saved === 'dark') return saved
+    return 'system'
+  })
+
+  const [systemPreference, setSystemPreference] = useState<'light' | 'dark'>(() => {
     return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
   })
 
   useEffect(() => {
+    const media = window.matchMedia('(prefers-color-scheme: dark)')
+    const handler = (e: MediaQueryListEvent) => {
+      setSystemPreference(e.matches ? 'dark' : 'light')
+    }
+    media.addEventListener('change', handler)
+    return () => media.removeEventListener('change', handler)
+  }, [])
+
+  const resolvedTheme = theme === 'system' ? systemPreference : theme
+
+  useEffect(() => {
     const root = document.documentElement
-    if (theme === 'dark') {
+    if (resolvedTheme === 'dark') {
       root.classList.add('dark')
     } else {
       root.classList.remove('dark')
     }
     localStorage.setItem('kinto_theme', theme)
-  }, [theme])
+  }, [theme, resolvedTheme])
 
   const setTheme = (newTheme: Theme) => setThemeState(newTheme)
-  const toggleTheme = () => setThemeState((prev) => (prev === 'dark' ? 'light' : 'dark'))
 
   return (
-    <ThemeContext.Provider value={{ theme, setTheme, toggleTheme }}>
+    <ThemeContext.Provider value={{ theme, resolvedTheme, setTheme }}>
       {children}
     </ThemeContext.Provider>
   )

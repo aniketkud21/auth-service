@@ -8,10 +8,6 @@ from ..db.models import User
 
 from ..utils.passwords import hash_password
 
-from .session_service import SessionService
-
-session_service = SessionService()
-
 class UserService:
     async def create_user(self, user: UserCreateRequest, db: AsyncSession) -> UserResponse:
         new_user = User(

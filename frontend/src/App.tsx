@@ -3,7 +3,8 @@ import { Navbar } from './components/Navbar'
 import { UsersPage } from './components/UsersPage'
 import { AddUserPage } from './components/AddUserPage'
 import { UserDetailPage } from './components/UserDetailPage'
-import { AuthCard } from './components/AuthCard'
+import { LoginPage } from './components/LoginPage'
+import { SignupPage } from './components/SignupPage'
 import { ThemeProvider } from './context/ThemeContext'
 
 export function App() {
@@ -20,9 +21,21 @@ export function App() {
           <Route
             path="/login"
             element={
-              <div className="flex flex-col items-center justify-center py-6 sm:py-12">
+              <div className="relative min-h-[calc(100vh-14rem)] flex flex-col items-center justify-center py-6 sm:py-10">
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[28rem] h-[28rem] bg-emerald-500/5 rounded-full blur-3xl pointer-events-none -z-10" />
                 <div className="w-full max-w-sm">
-                  <AuthCard />
+                  <LoginPage />
+                </div>
+              </div>
+            }
+          />
+          <Route
+            path="/signup"
+            element={
+              <div className="relative min-h-[calc(100vh-14rem)] flex flex-col items-center justify-center py-6 sm:py-10">
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[28rem] h-[28rem] bg-emerald-500/5 rounded-full blur-3xl pointer-events-none -z-10" />
+                <div className="w-full max-w-sm">
+                  <SignupPage />
                 </div>
               </div>
             }

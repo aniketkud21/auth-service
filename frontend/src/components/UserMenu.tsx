@@ -7,7 +7,9 @@ import {
   Sun, 
   Moon, 
   Copy, 
-  Check
+  Check,
+  ChevronDown,
+  Laptop
 } from 'lucide-react'
 import { useTheme } from '@/context/ThemeContext'
 import { authApi, type UserResponse } from '@/services/auth'
@@ -19,8 +21,9 @@ interface UserMenuProps {
 
 export function UserMenu({ user, onLogoutSuccess }: UserMenuProps) {
   const [isOpen, setIsOpen] = useState(false)
+  const [submenuOpen, setSubmenuOpen] = useState(false)
   const [copied, setCopied] = useState(false)
-  const { theme, toggleTheme } = useTheme()
+  const { theme, setTheme } = useTheme()
   const menuRef = useRef<HTMLDivElement>(null)
   const navigate = useNavigate()
 
@@ -139,38 +142,64 @@ export function UserMenu({ user, onLogoutSuccess }: UserMenuProps) {
             )}
           </div>
 
-          {/* Theme Selector Segmented Control */}
-          <div className="px-3.5 py-2">
-            <div className="flex items-center justify-between text-xs text-muted-foreground mb-1.5 font-medium">
-              <span>Appearance</span>
-              <span className="text-[11px] capitalize font-mono text-foreground/80">{theme}</span>
-            </div>
-            <div className="grid grid-cols-2 gap-1 p-0.5 rounded-lg bg-secondary/80 border border-border/60">
-              <button
-                type="button"
-                onClick={() => theme !== 'light' && toggleTheme()}
-                className={`flex items-center justify-center gap-1.5 py-1 px-2 rounded-md text-xs font-medium transition-all cursor-pointer ${
-                  theme === 'light'
-                    ? 'bg-background text-foreground shadow-sm'
-                    : 'text-muted-foreground hover:text-foreground'
-                }`}
-              >
-                <Sun className="h-3.5 w-3.5" />
-                <span>Light</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => theme !== 'dark' && toggleTheme()}
-                className={`flex items-center justify-center gap-1.5 py-1 px-2 rounded-md text-xs font-medium transition-all cursor-pointer ${
-                  theme === 'dark'
-                    ? 'bg-background text-foreground shadow-sm'
-                    : 'text-muted-foreground hover:text-foreground'
-                }`}
-              >
-                <Moon className="h-3.5 w-3.5" />
-                <span>Dark</span>
-              </button>
-            </div>
+          {/* Appearance Inline Accordion Section */}
+          <div className="py-1">
+            <button
+              type="button"
+              onClick={() => setSubmenuOpen((prev) => !prev)}
+              className="w-full flex items-center justify-between px-3.5 py-2 text-xs font-medium hover:bg-secondary/70 transition-colors text-left cursor-pointer"
+            >
+              <div className="flex items-center gap-2.5">
+                {theme === 'system' ? (
+                  <Laptop className="h-4 w-4 text-muted-foreground" />
+                ) : theme === 'dark' ? (
+                  <Moon className="h-4 w-4 text-emerald-400" />
+                ) : (
+                  <Sun className="h-4 w-4 text-amber-500" />
+                )}
+                <span>Appearance</span>
+              </div>
+              <div className="flex items-center gap-1.5 text-muted-foreground">
+                <span className="text-[11px] capitalize font-mono">{theme}</span>
+                <ChevronDown className={`h-3.5 w-3.5 transition-transform duration-150 ${submenuOpen ? 'rotate-180' : ''}`} />
+              </div>
+            </button>
+
+            {/* Expanded Theme Selection Options */}
+            {submenuOpen && (
+              <div className="px-2 py-1 mx-2 my-1 bg-secondary/40 rounded-lg space-y-0.5 border border-border/40">
+                {(
+                  [
+                    { id: 'system', label: 'System (Auto)', icon: Laptop },
+                    { id: 'light', label: 'Light', icon: Sun },
+                    { id: 'dark', label: 'Dark', icon: Moon },
+                  ] as const
+                ).map((item) => {
+                  const Icon = item.icon
+                  const isSelected = theme === item.id
+                  return (
+                    <button
+                      key={item.id}
+                      type="button"
+                      onClick={() => setTheme(item.id)}
+                      className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-md text-xs font-medium transition-colors text-left cursor-pointer ${
+                        isSelected
+                          ? 'bg-background text-foreground shadow-xs font-semibold'
+                          : 'text-muted-foreground hover:text-foreground hover:bg-secondary/60'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2">
+                        <Icon className={`h-3.5 w-3.5 ${isSelected ? 'text-emerald-500' : 'text-muted-foreground'}`} />
+                        <span>{item.label}</span>
+                      </div>
+                      {isSelected && (
+                        <Check className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
+                      )}
+                    </button>
+                  )
+                })}
+              </div>
+            )}
           </div>
 
           {/* Account Actions */}
