@@ -49,9 +49,6 @@ export function LoginPage() {
         <h1 className="text-xl font-semibold tracking-tight text-foreground">
           Welcome back
         </h1>
-        <p className="text-xs text-muted-foreground mt-1">
-          Enter your credentials to access your account
-        </p>
       </div>
 
       {/* Main Card */}

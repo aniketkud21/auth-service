@@ -72,9 +72,6 @@ export function SignupPage() {
         <h1 className="text-xl font-semibold tracking-tight text-foreground">
           Create an account
         </h1>
-        <p className="text-xs text-muted-foreground mt-1">
-          Start managing secure authentication and sessions
-        </p>
       </div>
 
       {/* Main Card */}
