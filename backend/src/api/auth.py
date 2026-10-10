@@ -19,8 +19,8 @@ router = APIRouter(
     tags=["auth"],
 )
 
-# auth_service = SessionService()
-auth_service = JWTService()
+auth_service = SessionService()
+# auth_service = JWTService()
 user_service = UserService()
 
 @router.post("/register", response_model=UserResponse)

@@ -8,8 +8,8 @@ from ..services.jwt_service import JWTService
 from ..services.user_service import UserService
 
 
-# auth_service = SessionService()
-auth_service = JWTService()
+auth_service = SessionService()
+# auth_service = JWTService()
 user_service = UserService()
 
 async def get_user(request: Request, db: AsyncSession = Depends(get_db)):

@@ -1,6 +1,8 @@
 import uuid
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
+
 from ..db.models import Session
 
 from .auth_service import AuthService
@@ -30,7 +32,7 @@ class SessionService(AuthService):
         if not verify_password(user.password, db_user.hashed_password):
             raise ValueError("Invalid credentials")
 
-        session_token = await self.create_session(db_user.id, db)
+        session_token = await self.create_session(db_user.id, None, None, db)
         return session_token
     
     async def logout(self, session_token: str, db):
@@ -42,31 +44,45 @@ class SessionService(AuthService):
         if not session:
             return {"is_valid": False, "user_id": None}
 
-        if session.expires_at <= datetime.now():
+        if session.expires_at <= datetime.now(timezone.utc):
             await self.delete_session(session_token, db)
             return {"is_valid": False, "user_id": None}
 
         return {"is_valid": True, "user_id": session.user_id}
 
     # DB Interactions
-    async def create_session(self, user_id: int, db: AsyncSession) -> str:
-        session_token = str(uuid.uuid4())
+    async def create_session(self, user_id: int, session_token: str | None, expires_at: datetime | None, db: AsyncSession) -> str:
+        if not session_token:
+            session_token = str(uuid.uuid4())
+
+        if not expires_at:
+            expires_at = datetime.now(timezone.utc) + timedelta(minutes=SESSION_TTL_IN_MINUTES)
+
         session = Session(
-            id=session_token, 
             user_id=user_id,
-            expires_at=datetime.now() + timedelta(minutes=SESSION_TTL_IN_MINUTES),
+            session_token=session_token,
+            expires_at=expires_at,
         )
         db.add(session)
         await db.commit()
         await db.refresh(session)
         return session_token
 
-    async def fetch_session(self, session_token: str, db: AsyncSession):
-        session = await db.get(Session, session_token)
-        if not session:
-            return None
+    # async def fetch_session(self, session_token: str, db: AsyncSession):
+    #     session = await db.get(Session, session_token)
+    #     if not session:
+    #         return None
 
-        return session
+    #     return session
+
+    async def fetch_session(self, session_token: str | None = None, db: AsyncSession = None):
+        if session_token:
+            query = select(Session).where(Session.session_token == session_token)
+        else:
+            raise ValueError("Please provide a session token")
+            
+        result = await db.execute(query)
+        return result.scalar_one_or_none()
 
     async def delete_session(self, session_token: str, db: AsyncSession):
         session = await self.fetch_session(session_token, db)

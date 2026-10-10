@@ -20,8 +20,9 @@ class User(Base):
 class Session(Base):
     __tablename__ = "sessions"
 
-    id = Column(String, primary_key=True)
+    id = Column(Integer, primary_key=True)
     user_id = Column(Integer, nullable=False)
-    expires_at = Column(DateTime, nullable=False)
-    created_at = Column(DateTime, default=func.now())
+    session_token = Column(String, unique=True, nullable=False)
+    expires_at = Column(DateTime(timezone=True), nullable=False)
+    created_at = Column(DateTime(timezone=True), default=func.now())
     
